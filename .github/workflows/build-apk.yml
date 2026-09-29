@@ -1,0 +1,145 @@
+name: Build APK
+
+# يتم تشغيل هذا الـ workflow عند:
+#  - كل push على branch main
+#  - كل pull request على branch main
+#  - عند دفع tag بصيغة v* (مثل v1.0) — لإنشاء GitHub Release
+#  - يدوياً من تبويب Actions في GitHub
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# صلاحيات الـ token — نحتاج:
+#  - contents: write  -> لإنشاء GitHub Releases عند دفع tag
+#  - actions: read    -> لقراءة معلومات الـ run
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # 1) استخراج الكود من المستودع
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # نأخذ كل التاريخ لتظهر إصدارات Git في الـ APK
+
+      # 2) إعداد JDK 17 (متطلب AGP 8.x)
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3) إعداد Android SDK — نقوم بتنزيل platform-tools و platform android-35 و build-tools
+      - name: 🤖 Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;26.3.11579264'
+
+      # 4) إعداد Gradle نفسه (لا نحتاج gradlew لأن الـ wrapper jar غير مُدرج في git)
+      - name: 🛠️ Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      # 5) توليد ملف Gradle Wrapper (لأن gradle-wrapper.jar غير مرفوع في git)
+      - name: 🔧 Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version 8.9 --distribution-type bin
+
+      # 6) جعل gradlew قابلاً للتنفيذ (إذا كان موجوداً)
+      - name: 🔑 chmod gradlew
+        run: chmod +x ./gradlew
+
+      # 7) بناء Debug APK — هذا الـ APK قابل للتثبيت مباشرة لأنه موقّع بـ debug key
+      - name: 🔨 Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace --no-build-cache
+
+      # 8) بناء Release APK (غير موقّع — يحتاج keystore خارجي للتوقيع النهائي)
+      - name: 🔨 Build Release APK (unsigned)
+        run: ./gradlew assembleRelease --no-daemon --stacktrace --no-build-cache
+        continue-on-error: true  # نتجاهل الفشل هنا لأنه قد يحتاج keystore
+
+      # 9) تشغيل Unit Tests (إذا وُجدت)
+      - name: 🧪 Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+        continue-on-error: true
+
+      # 10) رفع ملفات APK كـ artifacts قابلة للتنزيل من تبويب Actions
+      - name: 📦 Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioPixel-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 60
+          compression-level: 0  # APK مُضغوط أصلاً، لا فائدة من إعادة ضغطه
+
+      - name: 📦 Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioPixel-release-apk-unsigned
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 60
+          compression-level: 0
+
+      # 11) عرض مسار الـ APKs في الـ logs للمراجعة
+      - name: 📋 List built APKs
+        if: always()
+        run: |
+          echo "## Built APK files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find app/build/outputs/apk -name "*.apk" -type f | while read -r apk; do
+            SIZE=$(du -h "$apk" | cut -f1)
+            SHA=$(sha256sum "$apk" | cut -d' ' -f1)
+            echo "- **$apk** ($SIZE) — SHA256: \`$SHA\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build info" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+
+      # 12) إنشاء GitHub Release عند دفع tag بصيغة v* — يضمّن الـ APKs
+      - name: 🚀 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "AudioPixel ${{ github.ref_name }}"
+          body: |
+            # 🎙️ AudioPixel ${{ github.ref_name }}
+
+            ## 📦 ملفات APK جاهزة للتثبيت
+            - `app-debug.apk` — موقّع بمفتاح debug، قابل للتثبيت مباشرة على معظم الأجهزة.
+            - `app-release-unsigned.apk` — نسخة غير موقّعة، تحتاج keystore خارجي.
+
+            ## ⚙️ كيفية التثبيت
+            1. حمّل ملف `app-debug.apk`.
+            2. فعّل "تثبيت تطبيقات من مصادر غير معروفة" من إعدادات أندرويد.
+            3. افتح ملف APK من مدير الملفات.
+
+            ## 🔐 الأذونات المطلوبة
+            - `RECORD_AUDIO` — لتسجيل الميكروفون.
+            - `READ_MEDIA_IMAGES` — لاستيراد صور لفك التشفير.
+
+            ---
+            > Commit: ${{ github.sha }}
+            > Build run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          files: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: false

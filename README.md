@@ -6,6 +6,32 @@
   <strong>صوت ← صورة ← صوت</strong>
 </p>
 
+<p align="center">
+  <a href="https://github.com/salah55t/AudioPixel/actions/workflows/build-apk.yml">
+    <img alt="Build APK" src="https://github.com/salah55t/AudioPixel/actions/workflows/build-apk.yml/badge.svg" />
+  </a>
+  <a href="https://github.com/salah55t/AudioPixel/releases">
+    <img alt="Latest Release" src="https://img.shields.io/github/v/release/salah55t/AudioPixel?include_prereleases&label=Release" />
+  </a>
+  <a href="https://github.com/salah55t/AudioPixel/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/salah55t/AudioPixel?label=License" />
+  </a>
+  <img alt="Min Android" src="https://img.shields.io/badge/Min%20Android-8.0%20(API%2026)-00E5FF" />
+  <img alt="Target Android" src="https://img.shields.io/badge/Target%20Android-15%20(API%2035)-7C4DFF" />
+</p>
+
+---
+
+## 🚀 تثبيت سريع (بدون بناء)
+
+> **لا تريد البناء بنفسك؟** حمّل APK جاهزاً من تبويب [Actions](https://github.com/salah55t/AudioPixel/actions) (اختر آخر run ناجح ← Artifacts) أو من [Releases](https://github.com/salah55t/AudioPixel/releases) إن وُجد إصدار مُرقّم.
+
+1. افتح https://github.com/salah55t/AudioPixel/actions
+2. اختر آخر بناء أخضر في قائمة "Build APK"
+3. انزل لأسفل قسم **Artifacts** وحمّل `AudioPixel-debug-apk`
+4. فعّل "تثبيت من مصادر غير معروفة" في إعدادات أندرويد
+5. افتح ملف APK من مدير الملفات للتثبيت
+
 ---
 
 ## 📖 الفكرة
