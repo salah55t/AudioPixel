@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vector icon: microphone stylized as pixel wave -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pixel grid background -->
+    <path
+        android:fillColor="#0A0E1A"
+        android:pathData="M0,0h108v108h-108z" />
+    <!-- Microphone body -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,32c-6.6,0 -12,5.4 -12,12v18c0,6.6 5.4,12 12,12s12,-5.4 12,-12v-18c0,-6.6 -5.4,-12 -12,-12z" />
+    <!-- Mic stand -->
+    <path
+        android:fillColor="#7C4DFF"
+        android:pathData="M44,72h20v4h-20z" />
+    <path
+        android:fillColor="#7C4DFF"
+        android:pathData="M52,76h4v8h-4z" />
+    <path
+        android:fillColor="#7C4DFF"
+        android:pathData="M40,84h28v4h-28z" />
+    <!-- Pixel wave dots -->
+    <path android:fillColor="#00E676" android:pathData="M22,54h4v4h-4z" />
+    <path android:fillColor="#00E676" android:pathData="M28,50h4v4h-4z" />
+    <path android:fillColor="#00E676" android:pathData="M82,54h4v4h-4z" />
+    <path android:fillColor="#00E676" android:pathData="M76,50h4v4h-4z" />
+</vector>

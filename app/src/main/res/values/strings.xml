@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioPixel</string>
+    <string name="app_subtitle">حوّل صوتك إلى صورة مشفّرة</string>
+    <string name="record_start">بدء التسجيل</string>
+    <string name="record_stop">إيقاف وحفظ</string>
+    <string name="library">المكتبة</string>
+    <string name="decode">فك تشفير</string>
+    <string name="play">تشغيل</string>
+    <string name="share">مشاركة</string>
+    <string name="delete">حذف</string>
+    <string name="back">رجوع</string>
+    <string name="empty_library">لا توجد تسجيلات بعد</string>
+    <string name="pick_image">اختر صورة</string>
+</resources>
