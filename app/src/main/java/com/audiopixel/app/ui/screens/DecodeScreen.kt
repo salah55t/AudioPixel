@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ import java.io.File
  *  - يحفظ نسخة PCM في ملف WAV مؤقت قبل التشغيل.
  *  - يعرض رسالة خطأ واضحة إذا كانت الصورة ليست AudioPixel-encoded.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DecodeScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -54,37 +56,35 @@ fun DecodeScreen(onBack: () -> Unit) {
     ) { uri ->
         if (uri == null) {
             Toast.makeText(context, "لم يتم اختيار صورة", Toast.LENGTH_SHORT).show()
-            return@GetContent
-        }
-        pickedUri = uri
-        decodedPath = null
-        errorMsg = null
-        info = "جارٍ تحليل الصورة…"
-        // نفك التشفير في background بسيط عبر Thread
-        Thread {
-            try {
-                val pcm = app.repository.decodeFromImageUri(uri)
-                if (pcm == null || pcm.isEmpty()) {
-                    errorMsg = "تعذّر قراءة الصورة — تأكد أنها صُنعت بواسطة AudioPixel."
+        } else {
+            pickedUri = uri
+            decodedPath = null
+            errorMsg = null
+            info = "جارٍ تحليل الصورة…"
+            // نفك التشفير في background بسيط عبر Thread
+            Thread {
+                try {
+                    val pcm = app.repository.decodeFromImageUri(uri)
+                    if (pcm == null || pcm.isEmpty()) {
+                        errorMsg = "تعذّر قراءة الصورة — تأكد أنها صُنعت بواسطة AudioPixel."
+                        info = null
+                        return@Thread
+                    }
+                    // نكتب WAV مؤقتاً للتشغيل
+                    val tmpWav = File(context.cacheDir, "decoded_${System.currentTimeMillis()}.wav")
+                    val wavBytes = com.audiopixel.app.audio.AudioRecorder().pcmToWav(pcm)
+                    tmpWav.outputStream().use { it.write(wavBytes) }
+                    decodedPath = tmpWav.absolutePath
+                    info = "تم فك التشفير بنجاح!\nحجم البيانات: ${pcm.size} بايت\nيمكنك ضغط تشغيل للاستماع."
+                } catch (e: IllegalArgumentException) {
+                    errorMsg = e.message ?: "الصورة غير صالحة لفك التشفير"
                     info = null
-                    return@Thread
+                } catch (e: Exception) {
+                    errorMsg = "خطأ غير متوقع: ${e.message}"
+                    info = null
                 }
-                // نكتب WAV مؤقتاً للتشغيل
-                val tmpWav = File(context.cacheDir, "decoded_${System.currentTimeMillis()}.wav")
-                // نعيد بناء WAV عبر مستودع — لكن بدل دالة عامة نكتب هنا كذلك.
-                // الإلتفاف: نستخدم AudioRecorder().pcmToWav — رغم أنه ينشئ instance فهو رخيص.
-                val wavBytes = com.audiopixel.app.audio.AudioRecorder().pcmToWav(pcm)
-                tmpWav.outputStream().use { it.write(wavBytes) }
-                decodedPath = tmpWav.absolutePath
-                info = "تم فك التشفير بنجاح!\nحجم البيانات: ${pcm.size} بايت\nيمكنك ضغط تشغيل للاستماع."
-            } catch (e: IllegalArgumentException) {
-                errorMsg = e.message ?: "الصورة غير صالحة لفك التشفير"
-                info = null
-            } catch (e: Exception) {
-                errorMsg = "خطأ غير متوقع: ${e.message}"
-                info = null
-            }
-        }.start()
+            }.start()
+        }
     }
 
     Scaffold(

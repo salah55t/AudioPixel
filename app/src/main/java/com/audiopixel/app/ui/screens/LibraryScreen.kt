@@ -40,6 +40,7 @@ import java.util.Locale
  * كل عنصر يعرض: صورة مصغّرة (الصورة المشفّرة)، الاسم، التاريخ، المدة، الحجم،
  * وأزرار: تشغيل الصوت، مشاركة الصورة، حذف.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     onBack: () -> Unit,

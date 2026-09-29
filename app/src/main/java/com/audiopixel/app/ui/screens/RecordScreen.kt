@@ -111,10 +111,14 @@ fun RecordScreen(
                 ),
                 label = "scale"
             )
+            // نلتقط اللون هنا (خارج Canvas) لأن DrawScope ليس @Composable
+            val primaryColor = MaterialTheme.colorScheme.primary
+            val pulseColor = primaryColor.copy(alpha = 0.18f)
+            val barColor = primaryColor
             if (recState == AudioRecorder.State.RECORDING) {
                 Canvas(modifier = Modifier.fillMaxSize(scale)) {
                     drawCircle(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                        color = pulseColor,
                         radius = size.minDimension / 2f
                     )
                 }
@@ -123,7 +127,7 @@ fun RecordScreen(
             Canvas(modifier = Modifier.size(200.dp, 80.dp)) {
                 val bars = 24
                 val w = size.width / bars
-                val baseColor = MaterialTheme.colorScheme.primary
+                val baseColor = barColor
                 for (i in 0 until bars) {
                     val h = if (recState == AudioRecorder.State.RECORDING) {
                         // ارتفاع يعتمد على السعة الحالية + عامل عشوائي طفيف لكل عمود
